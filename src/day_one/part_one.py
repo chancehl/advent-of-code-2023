@@ -7,7 +7,7 @@ def read_input() -> List[str]:
     file_loc = os.path.join(os.path.dirname(__file__), "./input.txt")
 
     with open(file_loc) as f:
-        nums = [re.sub("[a-zA-Z]", "", line.strip()) for line in f]
+        nums = [line.strip() for line in f]
 
         return nums
 
@@ -15,7 +15,9 @@ def read_input() -> List[str]:
 def part_one(input: List[str]) -> int:
     sum = 0
 
-    for num_str in input:
+    for line in input:
+        num_str = re.sub("[a-zA-Z]", "", line)
+
         if len(num_str) == 1:
             sum += int(num_str + num_str)
         else:
