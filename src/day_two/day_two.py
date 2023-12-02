@@ -72,6 +72,7 @@ def part_one(input: List[str]) -> int:
         dice_dict = count_die(game)
 
         if is_game_possible(dice_dict):
+            # the games are not zero indexed. the first ID is 1, so offset index by 1.
             sum += index + 1
 
     return sum
