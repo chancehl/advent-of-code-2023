@@ -84,11 +84,11 @@ def part_two(input: List[str]) -> int:
     for game in input:
         dice_dict = count_die(game)
 
-        min_red = max(dice_dict["red"])
-        min_green = max(dice_dict["green"])
-        min_blue = max(dice_dict["blue"])
+        minimum_required_reds = max(dice_dict["red"])
+        minimum_required_greens = max(dice_dict["green"])
+        minimum_required_blues = max(dice_dict["blue"])
 
-        power = min_red * min_green * min_blue
+        power = minimum_required_reds * minimum_required_greens * minimum_required_blues
 
         sum += power
 
