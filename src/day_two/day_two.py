@@ -77,7 +77,25 @@ def part_one(input: List[str]) -> int:
     return sum
 
 
-if __name__ == "__main__":
-    score = part_one(read_input())
+def part_two(input: List[str]) -> int:
+    sum = 0
 
-    print(score)
+    for game in input:
+        dice_dict = count_die(game)
+
+        min_red = max(dice_dict["red"])
+        min_green = max(dice_dict["green"])
+        min_blue = max(dice_dict["blue"])
+
+        power = min_red * min_green * min_blue
+
+        sum += power
+
+    return sum
+
+
+if __name__ == "__main__":
+    score_one = part_one(read_input())
+    score_two = part_two(read_input())
+
+    print(score_one, score_two)
