@@ -1,6 +1,7 @@
 import os
 import re
 from typing import List, NamedTuple
+from enum import Enum
 
 
 class NumberMatch(NamedTuple):
@@ -8,6 +9,23 @@ class NumberMatch(NamedTuple):
     end: int
     num: int
     row: int
+
+
+class AsteriskMatch(NamedTuple):
+    start: int
+    end: int
+    row: int
+
+
+class Direction(Enum):
+    UP = 1
+    DOWN = 2
+    LEFT = 3
+    RIGHT = 4
+    UP_LEFT = 5
+    UP_RIGHT = 6
+    DOWN_LEFT = 7
+    DOWN_RIGHT = 8
 
 
 def read_input() -> List[str]:
@@ -32,6 +50,19 @@ def find_nums(input: List[str]) -> List[NumberMatch]:
             )
 
     return nums
+
+
+def find_asterisks(input: List[str]) -> List[AsteriskMatch]:
+    asterisks = []
+
+    for row, line in enumerate(input):
+        for match in re.finditer(r"\*", line):
+            start = match.start()
+            end = match.end()
+
+            asterisks.append(AsteriskMatch(start=start, end=end, row=row))
+
+    return asterisks
 
 
 def convert_input_to_matrix(input: List[str]) -> List[List[str]]:
@@ -98,23 +129,145 @@ def is_value_symbol(row: int, col: int, matrix: List[List[str]]) -> bool:
     return True if re.match(r"(\d+|\.)", value) is None else False
 
 
+def is_value_number(row: int, col: int, matrix: List[List[str]]) -> bool:
+    if row < 0 or col > len(matrix):
+        raise Exception("Index out of bounds")
+
+    value = matrix[row][col]
+
+    return True if re.match(r"\d", value) is not None else False
+
+
+def is_adjacent_to_two_nums(
+    asterisk_match: AsteriskMatch, matrix: List[List[str]]
+) -> bool:
+    adjacent_nums = get_adjacent_nums(asterisk_match, matrix)
+
+    return adjacent_nums is not None and len(adjacent_nums) == 2
+
+
+def crawl_for_num(origin: (int, int), matrix: List[List[str]]) -> int:
+    (row, col) = origin
+
+    # grab contact point
+    num_str = matrix[row][col]
+
+    if not is_value_number(row, col, matrix):
+        return None
+
+    # crawl left
+    if col > 0:
+        col_index = col - 1
+
+        while col_index > 0 and is_value_number(row, col_index, matrix):
+            num_str = f"{matrix[row][col_index]}{num_str}"
+            col_index -= 1
+
+    # crawl right
+    if col < len(matrix[0]):
+        col_index = col + 1
+
+        while col_index < len(matrix[0]) and is_value_number(row, col_index, matrix):
+            num_str = f"{num_str}{matrix[row][col_index]}"
+            col_index += 1
+
+    return int(num_str)
+
+
+def get_adjacent_num(
+    asterisk_match: AsteriskMatch, direction: Direction, matrix: List[List[str]]
+) -> int | None:
+    if direction == Direction.UP:
+        num = crawl_for_num((asterisk_match.row - 1, asterisk_match.start), matrix)
+
+        return num
+    if direction == Direction.DOWN:
+        num = crawl_for_num((asterisk_match.row + 1, asterisk_match.start), matrix)
+
+        return num
+    if direction == Direction.LEFT:
+        num = crawl_for_num((asterisk_match.row, asterisk_match.start - 1), matrix)
+
+        return num
+    if direction == Direction.RIGHT:
+        num = crawl_for_num((asterisk_match.row, asterisk_match.end), matrix)
+
+        return num
+    if direction == Direction.UP_LEFT:
+        num = crawl_for_num((asterisk_match.row - 1, asterisk_match.start - 1), matrix)
+
+        return num
+    if direction == Direction.UP_RIGHT:
+        num = crawl_for_num((asterisk_match.row - 1, asterisk_match.end), matrix)
+
+        return num
+    if direction == Direction.DOWN_LEFT:
+        num = crawl_for_num((asterisk_match.row + 1, asterisk_match.start - 1), matrix)
+
+        return num
+    if direction == Direction.DOWN_RIGHT:
+        num = crawl_for_num((asterisk_match.row + 1, asterisk_match.end), matrix)
+
+        return num
+
+    return None
+
+
+def get_adjacent_nums(
+    asterisk_match: AsteriskMatch, matrix: List[List[str]]
+) -> (int, int):
+    up = get_adjacent_num(asterisk_match, Direction.UP, matrix)
+    down = get_adjacent_num(asterisk_match, Direction.DOWN, matrix)
+    left = get_adjacent_num(asterisk_match, Direction.LEFT, matrix)
+    right = get_adjacent_num(asterisk_match, Direction.RIGHT, matrix)
+    up_left = get_adjacent_num(asterisk_match, Direction.UP_LEFT, matrix)
+    up_right = get_adjacent_num(asterisk_match, Direction.UP_RIGHT, matrix)
+    down_left = get_adjacent_num(asterisk_match, Direction.DOWN_LEFT, matrix)
+    down_right = get_adjacent_num(asterisk_match, Direction.DOWN_RIGHT, matrix)
+
+    adjacent_nums = list(
+        set(
+            filter(
+                lambda num: num is not None,
+                [up, down, left, right, up_left, up_right, down_left, down_right],
+            )
+        )
+    )
+
+    if len(adjacent_nums) != 2:
+        return None
+
+    return (adjacent_nums[0], adjacent_nums[1])
+
+
 def part_one(input: List[str]) -> int:
     sum = 0
     nums = find_nums(input)
     matrix = convert_input_to_matrix(input)
 
     for num_match in nums:
-        if num_match.num == 31:
-            print(num_match)
-
         if is_adjacent_to_symbol(num_match, matrix):
             sum += num_match.num
 
     return sum
 
 
+def part_two(input: List[str]) -> int:
+    sum = 0
+    asterisks = find_asterisks(input)
+    matrix = convert_input_to_matrix(input)
+
+    for asterisk_match in asterisks:
+        if is_adjacent_to_two_nums(asterisk_match, matrix):
+            (a, b) = get_adjacent_nums(asterisk_match, matrix)
+
+            sum += a * b
+
+    return sum
+
+
 if __name__ == "__main__":
     score_one = part_one(read_input())
-    # score_two = part_two(read_input())
+    score_two = part_two(read_input())
 
     print(score_one)
