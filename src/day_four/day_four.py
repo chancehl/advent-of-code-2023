@@ -11,7 +11,9 @@ def read_input() -> List[str]:
         return nums
 
 
-def compute_score(owned: List[int], winning: List[int]) -> int:
+def compute_score(nums: (List[int], List[int])) -> int:
+    (owned, winning) = nums
+
     matches = []
 
     starting_score = 1
@@ -57,9 +59,7 @@ def part_one(input: List[str]) -> int:
     score = 0
 
     for line in input:
-        (owned, winning) = parse_numbers(line)
-
-        score += compute_score(owned, winning)
+        score += compute_score(parse_numbers(line))
 
     return score
 
