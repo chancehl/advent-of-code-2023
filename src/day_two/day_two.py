@@ -66,20 +66,20 @@ def is_game_possible(dict: Dict[str, List[int]]) -> bool:
 
 
 def part_one(input: List[str]) -> int:
-    sum = 0
+    score = 0
 
     for index, game in enumerate(input):
         dice_dict = count_die(game)
 
         if is_game_possible(dice_dict):
             # the games are not zero indexed. the first ID is 1, so offset index by 1.
-            sum += index + 1
+            score += index + 1
 
-    return sum
+    return score
 
 
 def part_two(input: List[str]) -> int:
-    sum = 0
+    score = 0
 
     for game in input:
         dice_dict = count_die(game)
@@ -90,9 +90,9 @@ def part_two(input: List[str]) -> int:
 
         power = minimum_required_reds * minimum_required_greens * minimum_required_blues
 
-        sum += power
+        score += power
 
-    return sum
+    return score
 
 
 if __name__ == "__main__":

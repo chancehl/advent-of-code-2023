@@ -1,5 +1,4 @@
 import os
-import re
 from typing import List
 
 
@@ -29,34 +28,61 @@ def compute_score(owned: List[int], winning: List[int]) -> int:
     return total_score
 
 
+def count_matches(nums: (List[int], List[int])) -> int:
+    (owned, winning) = nums
+
+    matches = 0
+
+    for num in owned:
+        if num in winning:
+            matches += 1
+
+    return matches
+
+
 def parse_numbers(line: str) -> (List[int], List[int]):
     all_numbers = line.split(":")[1]  # always drop the 0th part ("Card N: ...")
     parts = all_numbers.split(" | ")
 
-    owned_number_strs = list(filter(lambda s: len(s) > 0, parts[0].strip().split(" ")))
-    owned_numbers = [int(num_str) for num_str in owned_number_strs]
+    owned_strs = list(filter(lambda s: len(s) > 0, parts[0].strip().split(" ")))
+    owned = [int(num_str) for num_str in owned_strs]
 
-    winning_number_strs = list(
-        filter(lambda s: len(s) > 0, parts[1].strip().split(" "))
-    )
-    winning_numbers = [int(num_str) for num_str in winning_number_strs]
+    winning_strs = list(filter(lambda s: len(s) > 0, parts[1].strip().split(" ")))
+    winning = [int(num_str) for num_str in winning_strs]
 
-    return (owned_numbers, winning_numbers)
+    return (owned, winning)
 
 
 def part_one(input: List[str]) -> int:
-    sum = 0
+    score = 0
 
     for line in input:
-        (owned_numbers, winning_numbers) = parse_numbers(line)
+        (owned, winning) = parse_numbers(line)
 
-        sum += compute_score(owned_numbers, winning_numbers)
+        score += compute_score(owned, winning)
 
-    return sum
+    return score
+
+
+def part_two(input: List[str]) -> int:
+    score = 0
+
+    process_queue = []
+
+    for index, line in enumerate(input):
+        # append the current item to the queue
+        process_queue.append(index)
+
+        # parse the winning and owned numbers
+        matches = count_matches(parse_numbers(line))
+
+        print(matches)
+
+    return score
 
 
 if __name__ == "__main__":
     score_one = part_one(read_input())
-    # score_two = part_two(read(input()))
+    score_two = part_two(read_input())
 
-    print(score_one)
+    print(score_one, score_two)

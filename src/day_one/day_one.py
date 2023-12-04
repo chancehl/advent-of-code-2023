@@ -44,37 +44,37 @@ def read_input() -> List[str]:
 
 
 def part_one(input: List[str]) -> int:
-    sum = 0
+    score = 0
 
     for line in input:
         num_str = re.sub("[a-zA-Z]", "", line)
 
         if len(num_str) == 1:
-            sum += int(num_str + num_str)
+            score += int(num_str + num_str)
         else:
             first = num_str[0]
             last = num_str[-1]
 
-            sum += int(first + last)
+            score += int(first + last)
 
-    return sum
+    return score
 
 
 def part_two(input: List[str]) -> int:
-    sum = 0
+    score = 0
 
     for num_str in input:
         num = re.sub("[a-zA-Z]", "", replace_numbers(num_str))
 
         if len(num) == 1:
-            sum += int(num + num)
+            score += int(num + num)
         else:
             first = num[0]
             last = num[-1]
 
-            sum += int(first + last)
+            score += int(first + last)
 
-    return sum
+    return score
 
 
 if __name__ == "__main__":

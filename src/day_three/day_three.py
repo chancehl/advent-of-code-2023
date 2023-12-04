@@ -241,19 +241,19 @@ def get_adjacent_nums(
 
 
 def part_one(input: List[str]) -> int:
-    sum = 0
+    score = 0
     nums = find_nums(input)
     matrix = convert_input_to_matrix(input)
 
     for num_match in nums:
         if is_adjacent_to_symbol(num_match, matrix):
-            sum += num_match.num
+            score += num_match.num
 
-    return sum
+    return score
 
 
 def part_two(input: List[str]) -> int:
-    sum = 0
+    score = 0
     asterisks = find_asterisks(input)
     matrix = convert_input_to_matrix(input)
 
@@ -261,9 +261,9 @@ def part_two(input: List[str]) -> int:
         if is_adjacent_to_two_nums(asterisk_match, matrix):
             (a, b) = get_adjacent_nums(asterisk_match, matrix)
 
-            sum += a * b
+            score += a * b
 
-    return sum
+    return score
 
 
 if __name__ == "__main__":
