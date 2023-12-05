@@ -1,6 +1,50 @@
 import os
 from typing import List, TypedDict
 
+# input.txt set
+SEED_TO_SOIL_START = 3
+SEED_TO_SOIL_END = 19
+
+SOIL_TO_FERTILIZER_START = 21
+SOIL_TO_FERTILIZER_END = 39
+
+FERTILIZER_TO_WATER_START = 41
+FERTILIZER_TO_WATER_END = 81
+
+WATER_TO_LIGHT_START = 83
+WATER_TO_LIGHT_END = 99
+
+LIGHT_TO_TEMPERATURE_START = 101
+LIGHT_TO_TEMPERATURE_END = 141
+
+TEMPERATURE_TO_HUMIDITY_START = 143
+TEMPERATURE_TO_HUMIDITY_END = 181
+
+HUMIDITY_TO_LOCATION_START = 183
+HUMIDITY_TO_LOCATION_END = 219
+
+# input-b.txt set
+# SEED_TO_SOIL_START = 3
+# SEED_TO_SOIL_END = 5
+
+# SOIL_TO_FERTILIZER_START = 7
+# SOIL_TO_FERTILIZER_END = 10
+
+# FERTILIZER_TO_WATER_START = 12
+# FERTILIZER_TO_WATER_END = 16
+
+# WATER_TO_LIGHT_START = 18
+# WATER_TO_LIGHT_END = 20
+
+# LIGHT_TO_TEMPERATURE_START = 22
+# LIGHT_TO_TEMPERATURE_END = 25
+
+# TEMPERATURE_TO_HUMIDITY_START = 27
+# TEMPERATURE_TO_HUMIDITY_END = 29
+
+# HUMIDITY_TO_LOCATION_START = 31
+# HUMIDITY_TO_LOCATION_END = 33
+
 
 class FarmerMap(TypedDict):
     desintation_range_start: int
@@ -44,39 +88,115 @@ def create_maps_from_slice(slice: List[str]) -> List[FarmerMap]:
     return maps
 
 
+def find_map(id: int, maps: List[FarmerMap]) -> FarmerMap:
+    for map in maps:
+        if (
+            id >= map["source_range_start"]
+            and id <= map["source_range_start"] + map["range_length"]
+        ):
+            return map
+
+    return FarmerMap(desintation_range_start=id, source_range_start=id, range_length=0)
+
+
+def compute_id(source_id: int, map: FarmerMap) -> int:
+    return source_id + (map["desintation_range_start"] - map["source_range_start"])
+
+
+def compute_location_number(seed: int, almanac: Almanac) -> int:
+    # seed to soil
+    soil_id = compute_id(seed, find_map(seed, almanac["seed_to_soil"]))
+
+    # soil to fertilizer
+    fertilizer_id = compute_id(
+        soil_id, find_map(soil_id, almanac["soil_to_fertilizer"])
+    )
+
+    # fertilizer to water
+    water_id = compute_id(
+        fertilizer_id, find_map(fertilizer_id, almanac["fertilizer_to_water"])
+    )
+
+    # water to light
+    light_id = compute_id(water_id, find_map(water_id, almanac["water_to_light"]))
+
+    # light to temperature
+    temperature_id = compute_id(
+        light_id, find_map(light_id, almanac["light_to_temperature"])
+    )
+
+    # temperature to humidity
+    humidity_id = compute_id(
+        temperature_id, find_map(temperature_id, almanac["temperature_to_humidity"])
+    )
+
+    # humidity to location
+    location_id = compute_id(
+        humidity_id, find_map(humidity_id, almanac["humidity_to_location"])
+    )
+
+    return location_id
+
+
 def parse_almanac(input: List[str]) -> Almanac:
     almanac = Almanac()
 
     # seed to soil
-    almanac["seed_to_soil"] = create_maps_from_slice(input[3:19])
+    almanac["seed_to_soil"] = create_maps_from_slice(
+        input[SEED_TO_SOIL_START:SEED_TO_SOIL_END]
+    )
 
     # soil to fertilizer
-    almanac["soil_to_fertilizer"] = create_maps_from_slice(input[21:39])
+    almanac["soil_to_fertilizer"] = create_maps_from_slice(
+        input[SOIL_TO_FERTILIZER_START:SOIL_TO_FERTILIZER_END]
+    )
 
     # fertilizer to water
-    almanac["fertilizer_to_water"] = create_maps_from_slice(input[41:81])
+    almanac["fertilizer_to_water"] = create_maps_from_slice(
+        input[FERTILIZER_TO_WATER_START:FERTILIZER_TO_WATER_END]
+    )
 
     # water to light
-    almanac["water_to_light"] = create_maps_from_slice(input[83:99])
+    almanac["water_to_light"] = create_maps_from_slice(
+        input[WATER_TO_LIGHT_START:WATER_TO_LIGHT_END]
+    )
 
     # light to temperature
-    almanac["light_to_temperature"] = create_maps_from_slice(input[101:141])
+    almanac["light_to_temperature"] = create_maps_from_slice(
+        input[LIGHT_TO_TEMPERATURE_START:LIGHT_TO_TEMPERATURE_END]
+    )
 
     # temperature to humidity
-    almanac["temperature_to_humidity"] = create_maps_from_slice(input[143:181])
+    almanac["temperature_to_humidity"] = create_maps_from_slice(
+        input[TEMPERATURE_TO_HUMIDITY_START:TEMPERATURE_TO_HUMIDITY_END]
+    )
 
     # humidity to location
-    almanac["humidity_to_location"] = create_maps_from_slice(input[183:219])
+    almanac["humidity_to_location"] = create_maps_from_slice(
+        input[HUMIDITY_TO_LOCATION_START:HUMIDITY_TO_LOCATION_END]
+    )
 
     return almanac
 
 
+def parse_seed_numbers(input: List[str]) -> List[int]:
+    raw_seed_number_line = input[0]
+    raw_seed_number_line_parts = raw_seed_number_line.split("seeds: ")[1]
+    raw_seed_numbers = raw_seed_number_line_parts.split(" ")
+
+    return [int(seed_no) for seed_no in raw_seed_numbers]
+
+
 def part_one(input: List[str]) -> int:
-    score = 0
+    location_numbers = []
 
     almanac = parse_almanac(input)
+    seeds = parse_seed_numbers(input)
 
-    return score
+    for seed in sorted(seeds):
+        location_numbers.append(compute_location_number(seed, almanac))
+
+    return min(location_numbers)
 
 
 if __name__ == "__main__":
