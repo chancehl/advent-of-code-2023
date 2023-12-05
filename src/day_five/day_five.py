@@ -1,49 +1,51 @@
 import os
-from typing import List, TypedDict
+import functools
+
+from typing import List, TypedDict, Tuple
 
 # input.txt set
-SEED_TO_SOIL_START = 3
-SEED_TO_SOIL_END = 19
+# SEED_TO_SOIL_START = 3
+# SEED_TO_SOIL_END = 19
 
-SOIL_TO_FERTILIZER_START = 21
-SOIL_TO_FERTILIZER_END = 39
+# SOIL_TO_FERTILIZER_START = 21
+# SOIL_TO_FERTILIZER_END = 39
 
-FERTILIZER_TO_WATER_START = 41
-FERTILIZER_TO_WATER_END = 81
+# FERTILIZER_TO_WATER_START = 41
+# FERTILIZER_TO_WATER_END = 81
 
-WATER_TO_LIGHT_START = 83
-WATER_TO_LIGHT_END = 99
+# WATER_TO_LIGHT_START = 83
+# WATER_TO_LIGHT_END = 99
 
-LIGHT_TO_TEMPERATURE_START = 101
-LIGHT_TO_TEMPERATURE_END = 141
+# LIGHT_TO_TEMPERATURE_START = 101
+# LIGHT_TO_TEMPERATURE_END = 141
 
-TEMPERATURE_TO_HUMIDITY_START = 143
-TEMPERATURE_TO_HUMIDITY_END = 181
+# TEMPERATURE_TO_HUMIDITY_START = 143
+# TEMPERATURE_TO_HUMIDITY_END = 181
 
-HUMIDITY_TO_LOCATION_START = 183
-HUMIDITY_TO_LOCATION_END = 219
+# HUMIDITY_TO_LOCATION_START = 183
+# HUMIDITY_TO_LOCATION_END = 219
 
 # input-b.txt set
-# SEED_TO_SOIL_START = 3
-# SEED_TO_SOIL_END = 5
+SEED_TO_SOIL_START = 3
+SEED_TO_SOIL_END = 5
 
-# SOIL_TO_FERTILIZER_START = 7
-# SOIL_TO_FERTILIZER_END = 10
+SOIL_TO_FERTILIZER_START = 7
+SOIL_TO_FERTILIZER_END = 10
 
-# FERTILIZER_TO_WATER_START = 12
-# FERTILIZER_TO_WATER_END = 16
+FERTILIZER_TO_WATER_START = 12
+FERTILIZER_TO_WATER_END = 16
 
-# WATER_TO_LIGHT_START = 18
-# WATER_TO_LIGHT_END = 20
+WATER_TO_LIGHT_START = 18
+WATER_TO_LIGHT_END = 20
 
-# LIGHT_TO_TEMPERATURE_START = 22
-# LIGHT_TO_TEMPERATURE_END = 25
+LIGHT_TO_TEMPERATURE_START = 22
+LIGHT_TO_TEMPERATURE_END = 25
 
-# TEMPERATURE_TO_HUMIDITY_START = 27
-# TEMPERATURE_TO_HUMIDITY_END = 29
+TEMPERATURE_TO_HUMIDITY_START = 27
+TEMPERATURE_TO_HUMIDITY_END = 29
 
-# HUMIDITY_TO_LOCATION_START = 31
-# HUMIDITY_TO_LOCATION_END = 33
+HUMIDITY_TO_LOCATION_START = 31
+HUMIDITY_TO_LOCATION_END = 33
 
 
 class FarmerMap(TypedDict):
@@ -63,7 +65,7 @@ class Almanac(TypedDict):
 
 
 def read_input() -> List[str]:
-    file_loc = os.path.join(os.path.dirname(__file__), "./input.txt")
+    file_loc = os.path.join(os.path.dirname(__file__), "./input-b.txt")
 
     with open(file_loc) as f:
         lines = [line.strip() for line in f]
@@ -135,6 +137,10 @@ def compute_location_number(seed: int, almanac: Almanac) -> int:
         humidity_id, find_map(humidity_id, almanac["humidity_to_location"])
     )
 
+    print(
+        f"CHAIN: {seed} -> {soil_id} -> {fertilizer_id} -> {water_id} -> {light_id} -> {temperature_id} -> {humidity_id} -> {location_id}"
+    )
+
     return location_id
 
 
@@ -179,12 +185,34 @@ def parse_almanac(input: List[str]) -> Almanac:
     return almanac
 
 
+def chunk(list, n: int):
+    for i in range(0, len(list), n):
+        yield list[i : i + n]
+
+
 def parse_seed_numbers(input: List[str]) -> List[int]:
     raw_seed_number_line = input[0]
     raw_seed_number_line_parts = raw_seed_number_line.split("seeds: ")[1]
     raw_seed_numbers = raw_seed_number_line_parts.split(" ")
 
     return [int(seed_no) for seed_no in raw_seed_numbers]
+
+
+def parse_seed_ranges(input: List[str]) -> List[Tuple[int, int]]:
+    seed_ranges = []
+    seed_numbers = parse_seed_numbers(input)
+
+    if len(seed_numbers) % 2 != 0:
+        raise Exception(
+            "Could not parse seed ranges from input: Invalid number of seeds."
+        )
+
+    chunks = chunk(seed_numbers, 2)
+
+    for start, length in chunks:
+        seed_ranges.append((start, start + length))
+
+    return seed_ranges
 
 
 def part_one(input: List[str]) -> int:
@@ -199,7 +227,36 @@ def part_one(input: List[str]) -> int:
     return min(location_numbers)
 
 
+def part_two(input: List[str]) -> int:
+    location_numbers = []
+
+    almanac = parse_almanac(input)
+    seeds = parse_seed_numbers(input)
+
+    processed = 0
+    maximum_seed = max(seeds)
+
+    seed_ranges = parse_seed_ranges(input)
+
+    for start, end in seed_ranges:
+        if start == maximum_seed:
+            maximum_seed = end
+
+    for start, end in sorted(seed_ranges):
+        for seed in range(start, end):
+            processed += 1
+
+            print(
+                f"PROGRESS: processing seed #{processed} (id {seed}) ({round((seed/maximum_seed) * 100, 5)}%)"
+            )
+
+            location_numbers.append(compute_location_number(seed, almanac))
+
+    return min(location_numbers)
+
+
 if __name__ == "__main__":
     score_one = part_one(read_input())
+    score_two = part_two(read_input())
 
-    print(score_one)
+    print(score_one, score_two)
