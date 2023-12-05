@@ -30,13 +30,11 @@ def compute_score(nums: (List[int], List[int])) -> int:
     return total_score
 
 
-def count_matches(nums: (List[int], List[int])) -> int:
-    (owned, winning) = nums
-
+def find_matches(nums: (List[int], List[int])) -> int:
     matches = 0
 
-    for num in owned:
-        if num in winning:
+    for num in nums[0]:
+        if num in nums[1]:
             matches += 1
 
     return matches
@@ -65,20 +63,31 @@ def part_one(input: List[str]) -> int:
 
 
 def part_two(input: List[str]) -> int:
-    score = 0
-
-    process_queue = []
+    processed = []
+    copies = []
 
     for index, line in enumerate(input):
-        # append the current item to the queue
-        process_queue.append(index)
+        # find matches
+        matches = find_matches(parse_numbers(line))
 
-        # parse the winning and owned numbers
-        matches = count_matches(parse_numbers(line))
+        # add copies to array
+        for subindex in range(index + 1, index + 1 + matches):
+            copies.append(subindex)
 
-        print(matches)
+        # find and process existing copies
+        matching_copies = list(filter(lambda c: c == index, copies))
 
-    return score
+        if len(matching_copies) > 0:
+            for copy in matching_copies:
+                for subindex in range(index + 1, index + 1 + matches):
+                    copies.append(subindex)
+
+                processed.append(copy)
+
+        # mark as processed
+        processed.append(index)
+
+    return len(processed)
 
 
 if __name__ == "__main__":
