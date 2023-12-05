@@ -6,9 +6,9 @@ def read_input() -> List[str]:
     file_loc = os.path.join(os.path.dirname(__file__), "./input.txt")
 
     with open(file_loc) as f:
-        nums = [line.strip() for line in f]
+        lines = [line.strip() for line in f]
 
-        return nums
+        return lines
 
 
 def compute_score(nums: (List[int], List[int])) -> int:
