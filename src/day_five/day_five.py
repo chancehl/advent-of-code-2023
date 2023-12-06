@@ -4,48 +4,48 @@ import functools
 from typing import List, TypedDict, Tuple
 
 # input.txt set
-# SEED_TO_SOIL_START = 3
-# SEED_TO_SOIL_END = 19
+SEED_TO_SOIL_START = 3
+SEED_TO_SOIL_END = 19
 
-# SOIL_TO_FERTILIZER_START = 21
-# SOIL_TO_FERTILIZER_END = 39
+SOIL_TO_FERTILIZER_START = 21
+SOIL_TO_FERTILIZER_END = 39
 
-# FERTILIZER_TO_WATER_START = 41
-# FERTILIZER_TO_WATER_END = 81
+FERTILIZER_TO_WATER_START = 41
+FERTILIZER_TO_WATER_END = 81
 
-# WATER_TO_LIGHT_START = 83
-# WATER_TO_LIGHT_END = 99
+WATER_TO_LIGHT_START = 83
+WATER_TO_LIGHT_END = 99
 
-# LIGHT_TO_TEMPERATURE_START = 101
-# LIGHT_TO_TEMPERATURE_END = 141
+LIGHT_TO_TEMPERATURE_START = 101
+LIGHT_TO_TEMPERATURE_END = 141
 
-# TEMPERATURE_TO_HUMIDITY_START = 143
-# TEMPERATURE_TO_HUMIDITY_END = 181
+TEMPERATURE_TO_HUMIDITY_START = 143
+TEMPERATURE_TO_HUMIDITY_END = 181
 
-# HUMIDITY_TO_LOCATION_START = 183
-# HUMIDITY_TO_LOCATION_END = 219
+HUMIDITY_TO_LOCATION_START = 183
+HUMIDITY_TO_LOCATION_END = 219
 
 # input-b.txt set
-SEED_TO_SOIL_START = 3
-SEED_TO_SOIL_END = 5
+# SEED_TO_SOIL_START = 3
+# SEED_TO_SOIL_END = 5
 
-SOIL_TO_FERTILIZER_START = 7
-SOIL_TO_FERTILIZER_END = 10
+# SOIL_TO_FERTILIZER_START = 7
+# SOIL_TO_FERTILIZER_END = 10
 
-FERTILIZER_TO_WATER_START = 12
-FERTILIZER_TO_WATER_END = 16
+# FERTILIZER_TO_WATER_START = 12
+# FERTILIZER_TO_WATER_END = 16
 
-WATER_TO_LIGHT_START = 18
-WATER_TO_LIGHT_END = 20
+# WATER_TO_LIGHT_START = 18
+# WATER_TO_LIGHT_END = 20
 
-LIGHT_TO_TEMPERATURE_START = 22
-LIGHT_TO_TEMPERATURE_END = 25
+# LIGHT_TO_TEMPERATURE_START = 22
+# LIGHT_TO_TEMPERATURE_END = 25
 
-TEMPERATURE_TO_HUMIDITY_START = 27
-TEMPERATURE_TO_HUMIDITY_END = 29
+# TEMPERATURE_TO_HUMIDITY_START = 27
+# TEMPERATURE_TO_HUMIDITY_END = 29
 
-HUMIDITY_TO_LOCATION_START = 31
-HUMIDITY_TO_LOCATION_END = 33
+# HUMIDITY_TO_LOCATION_START = 31
+# HUMIDITY_TO_LOCATION_END = 33
 
 
 class FarmerMap(TypedDict):
@@ -65,7 +65,7 @@ class Almanac(TypedDict):
 
 
 def read_input() -> List[str]:
-    file_loc = os.path.join(os.path.dirname(__file__), "./input-b.txt")
+    file_loc = os.path.join(os.path.dirname(__file__), "./input.txt")
 
     with open(file_loc) as f:
         lines = [line.strip() for line in f]
@@ -235,6 +235,7 @@ def part_two(input: List[str]) -> int:
 
     processed = 0
     maximum_seed = max(seeds)
+    sum = 0
 
     seed_ranges = parse_seed_ranges(input)
 
@@ -242,12 +243,14 @@ def part_two(input: List[str]) -> int:
         if start == maximum_seed:
             maximum_seed = end
 
+        sum += end - start
+
     for start, end in sorted(seed_ranges):
         for seed in range(start, end):
             processed += 1
 
             print(
-                f"PROGRESS: processing seed #{processed} (id {seed}) ({round((seed/maximum_seed) * 100, 5)}%)"
+                f"PROGRESS: processing seed #{processed} (id {seed}) ({round((seed/end) * 100, 5)}% / total {round((seed/maximum_seed) * 100, 5)}% / {processed} of {sum})"
             )
 
             location_numbers.append(compute_location_number(seed, almanac))
