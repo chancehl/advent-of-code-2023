@@ -1,5 +1,6 @@
 import os
 import functools
+import json
 
 from typing import List, Dict
 from enum import Enum
@@ -29,11 +30,13 @@ class Hand:
         self.type = kwargs.get("type")
 
     def __str__(self) -> str:
-        return f"{self.cards} (bid: ${self.bid}, type: ${self.type})"
+        return json.dumps(
+            {"cards": self.cards, "bid": self.bid, "type": self.type.name}
+        )
 
 
 def read_input() -> List[str]:
-    file_loc = os.path.join(os.path.dirname(__file__), "./input-b.txt")
+    file_loc = os.path.join(os.path.dirname(__file__), "./input.txt")
 
     with open(file_loc) as f:
         lines = [line.strip() for line in f]
@@ -41,7 +44,33 @@ def read_input() -> List[str]:
         return lines
 
 
-def count_cards(hand: str) -> Dict:
+def get_most_common_card(hand: str, modified_rules: bool = False) -> str:
+    cards = {}
+
+    for card in hand:
+        if card in cards:
+            cards[card] += 1
+        else:
+            cards[card] = 0
+
+    most_common = hand[0]
+    deck = original_cards if not modified_rules else modified_cards
+
+    for card in cards.keys():
+        # we always want to discard the joker as the most common card
+        if card != "J" and most_common == "J":
+            most_common = card
+        elif cards[card] > cards[most_common] and card != "J":
+            most_common = card
+        elif cards[card] == cards[most_common] and card != "J":
+            most_common = (
+                card if deck.index(card) > deck.index(most_common) else most_common
+            )
+
+    return most_common
+
+
+def count_cards(hand: str, modified_rules: bool = False) -> Dict:
     cards = {}
 
     for card in hand:
@@ -49,6 +78,14 @@ def count_cards(hand: str) -> Dict:
             cards[card] += 1
         else:
             cards[card] = 1
+
+    if modified_rules and cards.get("J", 0) > 0:
+        most_common = get_most_common_card(hand)
+        print(hand, most_common)
+        wildcards = cards.get("J")
+
+        cards["J"] = 0
+        cards[most_common] += wildcards
 
     return cards
 
@@ -93,8 +130,8 @@ def compare_hands(a: Hand, b: Hand) -> int:
                 return -1
 
 
-def determine_hand_type(hand: str) -> HandType:
-    cards = count_cards(hand)
+def determine_hand_type(hand: str, modified_rules: bool = False) -> HandType:
+    cards = count_cards(hand, modified_rules)
 
     counts = cards.values()
 
@@ -114,21 +151,6 @@ def determine_hand_type(hand: str) -> HandType:
         return HandType.HIGH_CARD
 
 
-def determine_modified_hand_type(hand: str) -> HandType:
-    # if there are no jokers then just use the original rules
-    if "J" not in hand:
-        return determine_hand_type(hand)
-
-    cards = count_cards(hand)
-    counts = cards.values()
-    wildcards = cards["J"]
-
-    if wildcards == 5:
-        return HandType.FIVE_OF_A_KIND
-
-    return HandType.HIGH_CARD
-
-
 def parse_hands(input: List[str], modified_rules=False) -> List[Hand]:
     hands = []
 
@@ -137,11 +159,7 @@ def parse_hands(input: List[str], modified_rules=False) -> List[Hand]:
 
         hand = parts[0]
         bid = int(parts[1])
-        type = (
-            determine_hand_type(hand)
-            if not modified_rules
-            else determine_modified_hand_type(hand)
-        )
+        type = determine_hand_type(hand, modified_rules)
 
         hands.append(Hand(cards=list(hand), bid=bid, type=type))
 
@@ -169,7 +187,6 @@ def part_two(input: List[str]) -> int:
     for index, hand in enumerate(
         sorted(hands, key=functools.cmp_to_key(compare_hands_modified_rules))
     ):
-        print(hand)
         total_winnings += hand.bid * (index + 1)
 
     return total_winnings
