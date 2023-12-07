@@ -4,7 +4,8 @@ import functools
 from typing import List, Dict
 from enum import Enum
 
-cards = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"]
+original_cards = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"]
+modified_cards = ["J", "2", "3", "4", "5", "6", "7", "8", "9", "T", "Q", "K", "A"]
 
 
 class HandType(Enum):
@@ -32,7 +33,7 @@ class Hand:
 
 
 def read_input() -> List[str]:
-    file_loc = os.path.join(os.path.dirname(__file__), "./input.txt")
+    file_loc = os.path.join(os.path.dirname(__file__), "./input-b.txt")
 
     with open(file_loc) as f:
         lines = [line.strip() for line in f]
@@ -52,6 +53,26 @@ def count_cards(hand: str) -> Dict:
     return cards
 
 
+def compare_hands_modified_rules(a: Hand, b: Hand) -> int:
+    # if they're not equal hand types return the greater hand
+    if a.type.value != b.type.value:
+        if a.type.value > b.type.value:
+            return 1
+        else:
+            return -1
+
+    # if they are equal hand types then start doing card comparisons
+    for card_a, card_b in zip(a.cards, b.cards):
+        card_a_index = modified_cards.index(card_a)
+        card_b_index = modified_cards.index(card_b)
+
+        if card_a_index != card_b_index:
+            if card_a_index > card_b_index:
+                return 1
+            else:
+                return -1
+
+
 def compare_hands(a: Hand, b: Hand) -> int:
     # if they're not equal hand types return the greater hand
     if a.type.value != b.type.value:
@@ -62,8 +83,8 @@ def compare_hands(a: Hand, b: Hand) -> int:
 
     # if they are equal hand types then start doing card comparisons
     for card_a, card_b in zip(a.cards, b.cards):
-        card_a_index = cards.index(card_a)
-        card_b_index = cards.index(card_b)
+        card_a_index = original_cards.index(card_a)
+        card_b_index = original_cards.index(card_b)
 
         if card_a_index != card_b_index:
             if card_a_index > card_b_index:
@@ -93,7 +114,22 @@ def determine_hand_type(hand: str) -> HandType:
         return HandType.HIGH_CARD
 
 
-def parse_hands(input: List[str]) -> List[Hand]:
+def determine_modified_hand_type(hand: str) -> HandType:
+    # if there are no jokers then just use the original rules
+    if "J" not in hand:
+        return determine_hand_type(hand)
+
+    cards = count_cards(hand)
+    counts = cards.values()
+    wildcards = cards["J"]
+
+    if wildcards == 5:
+        return HandType.FIVE_OF_A_KIND
+
+    return HandType.HIGH_CARD
+
+
+def parse_hands(input: List[str], modified_rules=False) -> List[Hand]:
     hands = []
 
     for line in input:
@@ -101,7 +137,11 @@ def parse_hands(input: List[str]) -> List[Hand]:
 
         hand = parts[0]
         bid = int(parts[1])
-        type = determine_hand_type(hand)
+        type = (
+            determine_hand_type(hand)
+            if not modified_rules
+            else determine_modified_hand_type(hand)
+        )
 
         hands.append(Hand(cards=list(hand), bid=bid, type=type))
 
@@ -122,7 +162,17 @@ def part_one(input: List[str]) -> int:
 
 
 def part_two(input: List[str]) -> int:
-    return -1
+    hands = parse_hands(input, modified_rules=True)
+
+    total_winnings = 0
+
+    for index, hand in enumerate(
+        sorted(hands, key=functools.cmp_to_key(compare_hands_modified_rules))
+    ):
+        print(hand)
+        total_winnings += hand.bid * (index + 1)
+
+    return total_winnings
 
 
 if __name__ == "__main__":
