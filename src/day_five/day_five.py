@@ -1,6 +1,6 @@
 import os
-import functools
 
+from joblib import Parallel, delayed
 from typing import List, TypedDict, Tuple
 
 # input.txt set
@@ -138,10 +138,21 @@ def compute_location_number(seed: int, almanac: Almanac) -> int:
     )
 
     print(
-        f"CHAIN: {seed} -> {soil_id} -> {fertilizer_id} -> {water_id} -> {light_id} -> {temperature_id} -> {humidity_id} -> {location_id}"
+        f"CHAIN: {seed} (seed) -> {soil_id} (soil) -> {fertilizer_id} (fertilizer) -> {water_id} (water) -> {light_id} (light) -> {temperature_id} (temperature) -> {humidity_id} (humidity) -> {location_id} (location)"
     )
 
     return location_id
+
+
+def compute_location_numbers(seed_range: (int, int), almanac: Almanac) -> List[int]:
+    location_numbers = []
+
+    (start, end) = seed_range
+
+    for seed in range(start, end):
+        location_numbers.append(compute_location_number(seed, almanac))
+
+    return location_numbers
 
 
 def parse_almanac(input: List[str]) -> Almanac:
@@ -231,35 +242,21 @@ def part_two(input: List[str]) -> int:
     location_numbers = []
 
     almanac = parse_almanac(input)
-    seeds = parse_seed_numbers(input)
-
-    processed = 0
-    maximum_seed = max(seeds)
-    sum = 0
-
     seed_ranges = parse_seed_ranges(input)
 
-    for start, end in seed_ranges:
-        if start == maximum_seed:
-            maximum_seed = end
+    results = Parallel(n_jobs=16)(
+        delayed(compute_location_numbers)(seed_range, almanac)
+        for seed_range in sorted(seed_ranges)
+    )
 
-        sum += end - start
-
-    for start, end in sorted(seed_ranges):
-        for seed in range(start, end):
-            processed += 1
-
-            print(
-                f"PROGRESS: processing seed #{processed} (id {seed}) ({round((seed/end) * 100, 5)}% / total {round((seed/maximum_seed) * 100, 5)}% / {processed} of {sum})"
-            )
-
-            location_numbers.append(compute_location_number(seed, almanac))
+    for result in results:
+        location_numbers.extend(result)
 
     return min(location_numbers)
 
 
 if __name__ == "__main__":
-    score_one = part_one(read_input())
+    # score_one = part_one(read_input())
     score_two = part_two(read_input())
 
-    print(score_one, score_two)
+    print(score_two)
