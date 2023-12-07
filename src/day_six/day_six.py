@@ -1,6 +1,6 @@
 import os
 
-from typing import List
+from typing import List, Tuple
 
 
 def read_input() -> List[str]:
@@ -12,7 +12,7 @@ def read_input() -> List[str]:
         return lines
 
 
-def parse_race_records(input: List[str]) -> (int, int):
+def parse_race_records(input: List[str]) -> List[Tuple]:
     raw_times = input[0]
     raw_distances = input[1]
 
@@ -28,6 +28,19 @@ def parse_race_records(input: List[str]) -> (int, int):
     ]
 
     return zip(times, distances)
+
+
+def parse_race_record(input: List[str]) -> (int, int):
+    raw_times = input[0]
+    raw_distances = input[1]
+
+    time_value = raw_times.split("Time:")[1]
+    distance_value = raw_distances.split("Distance:")[1]
+
+    time = int(time_value.strip().replace(" ", ""))
+    distance = int(distance_value.strip().replace(" ", ""))
+
+    return (time, distance)
 
 
 def compute_ways_to_beat_record(race: (int, int)) -> int:
@@ -57,7 +70,11 @@ def part_one(input: List[str]) -> int:
 
 
 def part_two(input: List[str]) -> int:
-    return -1
+    race = parse_race_record(input)
+
+    ways = compute_ways_to_beat_record(race)
+
+    return ways
 
 
 if __name__ == "__main__":
