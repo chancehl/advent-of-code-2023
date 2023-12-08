@@ -1,4 +1,5 @@
 import os
+import math
 from typing import List, Dict
 from typing_extensions import Self
 
@@ -31,47 +32,53 @@ def construct_graph(input: List[str]) -> Dict:
     return graph
 
 
-# def part_one(input: List[str]) -> int:
-#     directions = parse_directions(input)
-#     graph = construct_graph(input)
-
-#     steps = 0
-#     current = "AAA"
-
-#     while current != "ZZZ":
-#         for direction in directions:
-#             if direction == "L":
-#                 current = graph[current][0]
-#             else:
-#                 current = graph[current][1]
-
-#             steps += 1
-
-#     return steps
-
-
-def part_two(input: List[str]) -> int:
+def part_one(input: List[str]) -> int:
     directions = parse_directions(input)
     graph = construct_graph(input)
 
     steps = 0
-    current_nodes = list(filter(lambda node: node[2] == "A", graph.keys()))
+    current = "AAA"
 
-    while not all([True if node[2] == "Z" else False for node in current_nodes]):
+    while current != "ZZZ":
         for direction in directions:
-            print(current_nodes)
             if direction == "L":
-                current_nodes = [graph[node][0] for node in current_nodes]
+                current = graph[current][0]
             else:
-                current_nodes = [graph[node][1] for node in current_nodes]
+                current = graph[current][1]
 
             steps += 1
 
     return steps
 
 
+def part_two(input: List[str]) -> int:
+    directions = parse_directions(input)
+    graph = construct_graph(input)
+
+    all_steps = []
+    starting_nodes = list(filter(lambda node: node[2] == "A", graph.keys()))
+
+    for node in starting_nodes:
+        current = node
+        steps = 0
+
+        while current[2] != "Z":
+            for direction in directions:
+                if direction == "L":
+                    current = graph[current][0]
+                else:
+                    current = graph[current][1]
+
+                steps += 1
+
+        all_steps.append(steps)
+
+    # I absolutely cheated on this one. My 30 year old ass doesn't remember what LCM is or even why I'm using it, but Reddit said to use it and it worked so...
+    return math.lcm(*all_steps)
+
+
 if __name__ == "__main__":
-    # score_one = part_one(read_input())
+    score_one = part_one(read_input())
     score_two = part_two(read_input())
 
     print(score_two)
