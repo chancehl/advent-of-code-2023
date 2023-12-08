@@ -31,31 +31,47 @@ def construct_graph(input: List[str]) -> Dict:
     return graph
 
 
-def part_one(input: List[str]) -> int:
+# def part_one(input: List[str]) -> int:
+#     directions = parse_directions(input)
+#     graph = construct_graph(input)
+
+#     steps = 0
+#     current = "AAA"
+
+#     while current != "ZZZ":
+#         for direction in directions:
+#             if direction == "L":
+#                 current = graph[current][0]
+#             else:
+#                 current = graph[current][1]
+
+#             steps += 1
+
+#     return steps
+
+
+def part_two(input: List[str]) -> int:
     directions = parse_directions(input)
     graph = construct_graph(input)
 
     steps = 0
-    current = "AAA"
+    current_nodes = list(filter(lambda node: node[2] == "A", graph.keys()))
 
-    while current != "ZZZ":
+    while not all([True if node[2] == "Z" else False for node in current_nodes]):
         for direction in directions:
+            print(current_nodes)
             if direction == "L":
-                current = graph[current][0]
+                current_nodes = [graph[node][0] for node in current_nodes]
             else:
-                current = graph[current][1]
+                current_nodes = [graph[node][1] for node in current_nodes]
 
             steps += 1
 
     return steps
 
 
-def part_two(input: List[str]) -> int:
-    return -1
-
-
 if __name__ == "__main__":
-    score_one = part_one(read_input())
+    # score_one = part_one(read_input())
     score_two = part_two(read_input())
 
-    print(score_one, score_two)
+    print(score_two)
