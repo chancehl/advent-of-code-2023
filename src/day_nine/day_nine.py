@@ -20,7 +20,9 @@ def computed_diffed_subsequence(nums: List[int]) -> List[int]:
     return diffs
 
 
-def compute_extrapolated_sequence(all_nums: List[List[int]]) -> List[int]:
+def compute_extrapolated_sequence(
+    all_nums: List[List[int]], backwards: bool = False
+) -> List[int]:
     if len(all_nums) < 2:
         raise Exception("Invalid number of sequences (min=2)")
 
@@ -32,11 +34,14 @@ def compute_extrapolated_sequence(all_nums: List[List[int]]) -> List[int]:
         a = all_nums[index]
         b = all_nums[index + 1]
 
-        b.append(a[-1] + b[-1])
+        if backwards:
+            b.insert(0, b[0] - a[0])
+        else:
+            b.append(a[-1] + b[-1])
 
         index += 1
 
-    return [sequence[-1] for sequence in all_nums]
+    return [sequence[-1 if not backwards else 0] for sequence in all_nums]
 
 
 def is_all_zeroes(nums: List[int]) -> bool:
@@ -73,7 +78,34 @@ def part_one(input: List[str]) -> int:
 
 
 def part_two(input: List[str]) -> int:
-    return -1
+    score = 0
+
+    for line in input:
+        # convert to nums
+        nums = [int(num) for num in line.split(" ")]
+
+        # capture all subsequences
+        subsequences = [nums]
+
+        # compute this specific subsequence
+        subsequence = computed_diffed_subsequence(nums)
+
+        # repeat
+        while not is_all_zeroes(subsequence):
+            subsequences.append(subsequence)
+            subsequence = computed_diffed_subsequence(subsequence)
+        else:
+            subsequences.append(subsequence)
+
+        # extrapolate
+        extrapolated_values = compute_extrapolated_sequence(
+            subsequences, backwards=True
+        )
+
+        # sum
+        score += extrapolated_values[-1]
+
+    return score
 
 
 if __name__ == "__main__":
