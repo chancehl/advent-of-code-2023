@@ -1,21 +1,105 @@
 import os
-from typing import List, Optional
+from typing import List
 from typing_extensions import Self
 
 
 class PipeMazeNode:
-    symbol: str
+    # honestly I hate having to track this across nodes but I'm too lazy to refactor this out
+    _matrix: List[List[str]]
     position: (int, int)
-    connections: (Self, Self)
 
-    def __init__(
-        self, symbol: str, position: (int, int), connections: (Self, Self)
-    ) -> None:
-        self.symbol = symbol
+    def __init__(self, matrix: List[List[str]], position: (int, int)) -> None:
+        self._matrix = matrix
         self.position = position
-        self.connections = connections
 
-    def compute_distance_from_root() -> int:
+    def __str__(self) -> str:
+        return f"({self.position[0]}, {self.position[1]}) {self._matrix[self.position[0]][self.position[1]]}"
+
+    def calculate_connections(self) -> ((int, int), (int, int)):
+        (row, col) = self.position
+
+        symbol = self._matrix[row][col]
+
+        # N + S
+        if symbol == "|":
+            north_node = None
+            south_node = None
+
+            if row > 1:
+                north_node = (row - 1, col)
+
+            if row < len(self._matrix):
+                south_node = (row + 1, col)
+
+            return (north_node, south_node)
+        # E + W
+        elif symbol == "-":
+            east_node = None
+            west_node = None
+
+            if col < len(self._matrix[0]):
+                east_node = (row, col + 1)
+
+            if col > 1:
+                west_node = (row, col - 1)
+
+            return (east_node, west_node)
+        # N + E
+        elif symbol == "L":
+            north_node = None
+            east_node = None
+
+            if row > 1:
+                north_node = (row - 1, col)
+
+            if col < len(self._matrix[0]):
+                east_node = (row, col + 1)
+
+            return (north_node, east_node)
+        # N + W
+        elif symbol == "J":
+            north_node = None
+            west_node = None
+
+            if row > 1:
+                north_node = (row - 1, col)
+
+            if col > 1:
+                west_node = (row, col - 1)
+
+            return (north_node, west_node)
+        # S + W
+        elif symbol == "7":
+            south_node = None
+            west_node = None
+
+            if row < len(self._matrix):
+                south_node = (row + 1, col)
+
+            if col > 1:
+                west_node = (row, col - 1)
+
+            return (south_node, west_node)
+        # S + E
+        elif symbol == "F":
+            south_node = None
+            east_node = None
+
+            if row < len(self._matrix):
+                south_node = (row + 1, col)
+
+            if col < len(self._matrix[0]):
+                east_node = (row, col + 1)
+
+            return (south_node, east_node)
+        elif symbol == ".":
+            return (None, None)
+        elif symbol == "S":
+            return (None, None)
+        else:
+            raise Exception(f"Invalid symbol: {symbol}")
+
+    def compute_distance_from_root(self) -> int:
         return -1
 
 
@@ -34,82 +118,14 @@ class PipeMaze:
 
         for row in range(0, len(matrix)):
             for col in range(0, len(matrix[0])):
-                connections = PipeMaze.calculate_connections((row, col))
-
-                node = PipeMazeNode(
-                    symbol=matrix[row][col],
-                    position=(row, col),
-                    connections=connections,
-                )
+                node = PipeMazeNode(matrix, (row, col))
 
                 nodes.append(node)
 
-                if node.symbol == "S":
+                if matrix[row][col] == "S":
                     start = node
 
-                print(node)
-
         return PipeMaze(start=start, nodes=nodes)
-
-    @staticmethod
-    def calculate_connections(
-        matrix: List[List[str]], position: (int, int)
-    ) -> ((int, int), (int, int)):
-        (row, col) = position
-
-        symbol = matrix[row][col]
-
-        # N + S
-        if symbol == "|":
-            north_node = None
-            south_node = None
-
-            if row > 1:
-                north_node = (row - 1, col)
-
-            if row < len(matrix):
-                south_node = (row + 1, col)
-
-            return (north_node, south_node)
-        # E + W
-        elif symbol == "-":
-            east_node = None
-            west_node = None
-
-            if col < len(matrix[0]):
-                east_node = (row, col + 1)
-
-            return (east_node, west_node)
-        # N + E
-        elif symbol == "L":
-            north_node = None
-            east_node = None
-
-            return (north_node, east_node)
-        # N + W
-        elif symbol == "J":
-            north_node = None
-            west_node = None
-
-            return (north_node, west_node)
-        # S + W
-        elif symbol == "7":
-            south_node = None
-            west_node = None
-
-            return (south_node, west_node)
-        # S + E
-        elif symbol == "F":
-            south_node = None
-            east_node = None
-
-            return (south_node, east_node)
-        elif symbol == ".":
-            return (None, None)
-        elif symbol == "S":
-            return (None, None)
-        else:
-            raise Exception(f"Invalid symbol: {symbol}")
 
 
 def read_input() -> List[str]:
@@ -129,6 +145,7 @@ def part_one(input: List[str]) -> int:
     maze = PipeMaze.from_matrix(raw_nodes)
 
     for node in maze.nodes:
+        # print(node, node.compute_distance_from_root())
         max_distance = max(max_distance, node.compute_distance_from_root())
 
     return max_distance
