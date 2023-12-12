@@ -139,10 +139,6 @@ def part_one(input: List[str]) -> int:
     for node in maze.graph:
         path = maze.find_shortest_path(start=node, end=start, path=[])
 
-        print(
-            f"{node} ({maze._matrix[node[0]][node[1]]}) paths -> {path} {maze.graph[node]}"
-        )
-
         if path != None:
             max_distance = max(max_distance, len(path) - 1)
 
