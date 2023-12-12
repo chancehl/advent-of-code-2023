@@ -1,4 +1,5 @@
 import os
+from queue import Queue
 from typing import List
 from typing_extensions import Self
 
@@ -99,33 +100,57 @@ class PipeMazeNode:
         else:
             raise Exception(f"Invalid symbol: {symbol}")
 
-    def compute_distance_from_root(self) -> int:
+    def compute_distance_from_root(self, visited: List[int] = []) -> int:
+        symbol = self._matrix[self.position[0]][self.position[1]]
+
+        print("Computing distance for", symbol)
+
+        queue = Queue()
+
+        # mark self as visited
+        visited.append(self.position)
+
+        # enqueue self
+        queue.put(self.position)
+
+        # loop
+        while not queue.empty():
+            # pop from queue
+            current = queue.get()
+
+            # calculate connections
+            connections = PipeMazeNode(self._matrix, current).calculate_connections()
+
+            # connection 0
+            if connections[0] != None and connections[0] not in visited:
+                queue.put(connections[0])
+
+                visited.append(connections[0])
+
+            # connection 1
+            if connections[1] != None and connections[1] not in visited:
+                queue.put(connections[1])
+
+                visited.append(connections[1])
+
         return -1
 
 
 class PipeMaze:
-    start: PipeMazeNode
     nodes: List[PipeMazeNode]
 
-    def __init__(self, start: PipeMazeNode, nodes: List[PipeMazeNode]) -> None:
-        self.start = start
+    def __init__(self, nodes: List[PipeMazeNode]) -> None:
         self.nodes = nodes
 
     @staticmethod
     def from_matrix(matrix: List[List[str]]) -> Self:
-        start = None
         nodes = []
 
         for row in range(0, len(matrix)):
             for col in range(0, len(matrix[0])):
-                node = PipeMazeNode(matrix, (row, col))
+                nodes.append(PipeMazeNode(matrix, (row, col)))
 
-                nodes.append(node)
-
-                if matrix[row][col] == "S":
-                    start = node
-
-        return PipeMaze(start=start, nodes=nodes)
+        return PipeMaze(nodes=nodes)
 
 
 def read_input() -> List[str]:
@@ -146,7 +171,10 @@ def part_one(input: List[str]) -> int:
 
     for node in maze.nodes:
         # print(node, node.compute_distance_from_root())
-        max_distance = max(max_distance, node.compute_distance_from_root())
+        max_distance = max(
+            max_distance,
+            node.compute_distance_from_root(visited=[]),
+        )
 
     return max_distance
 
