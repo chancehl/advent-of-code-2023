@@ -100,40 +100,85 @@ class PipeMazeNode:
         else:
             raise Exception(f"Invalid symbol: {symbol}")
 
-    def compute_distance_from_root(self, visited: List[int] = []) -> int:
-        symbol = self._matrix[self.position[0]][self.position[1]]
+    def traverse_clockwise(self, visited: List[int] = []) -> int:
+        # declare stack
+        stack = []
 
-        print("Computing distance for", symbol)
-
-        queue = Queue()
-
-        # mark self as visited
-        visited.append(self.position)
-
-        # enqueue self
-        queue.put(self.position)
+        # append current
+        stack.append(self.position)
 
         # loop
-        while not queue.empty():
-            # pop from queue
-            current = queue.get()
+        while len(stack) > 0:
+            # pop current
+            current = stack.pop()
 
-            # calculate connections
-            connections = PipeMazeNode(self._matrix, current).calculate_connections()
+            # check if we're at the terminus
+            if self._matrix[current[0]][current[1]] == "S":
+                return len(visited)
+            # otherwise continue with DFS
+            else:
+                # check if we're not visited
+                if current not in visited:
+                    visited.append(current)
 
-            # connection 0
-            if connections[0] != None and connections[0] not in visited:
-                queue.put(connections[0])
+                # calculate connections
+                connections = PipeMazeNode(
+                    self._matrix, current
+                ).calculate_connections()
 
-                visited.append(connections[0])
+                # traverse "left"
+                if connections[0] != None and connections[0] not in visited:
+                    stack.append(connections[0])
 
-            # connection 1
-            if connections[1] != None and connections[1] not in visited:
-                queue.put(connections[1])
+                # traverse "right"
+                if connections[1] != None and connections[1] not in visited:
+                    stack.append(connections[1])
 
-                visited.append(connections[1])
-
+        # This means we never hit the S and have traversed down the wrong path
         return -1
+
+    def traverse_counterclockwise(self, visited: List[int] = []) -> int:
+        # declare stack
+        stack = []
+
+        # append current
+        stack.append(self.position)
+
+        # loop
+        while len(stack) > 0:
+            # pop current
+            current = stack.pop()
+
+            # check if we're at the terminus
+            if self._matrix[current[0]][current[1]] == "S":
+                return len(visited)
+            # otherwise continue with DFS
+            else:
+                # check if we're not visited
+                if current not in visited:
+                    visited.append(current)
+
+                # calculate connections
+                connections = PipeMazeNode(
+                    self._matrix, current
+                ).calculate_connections()
+
+                # traverse "right"
+                if connections[1] != None and connections[1] not in visited:
+                    stack.append(connections[1])
+
+                # traverse "left"
+                if connections[0] != None and connections[0] not in visited:
+                    stack.append(connections[0])
+
+        # This means we never hit the S and have traversed down the wrong path
+        return -1
+
+    def compute_distance_from_root(self) -> int:
+        return min(
+            self.traverse_clockwise(visited=[]),
+            self.traverse_counterclockwise(visited=[]),
+        )
 
 
 class PipeMaze:
@@ -154,7 +199,7 @@ class PipeMaze:
 
 
 def read_input() -> List[str]:
-    file_loc = os.path.join(os.path.dirname(__file__), "./input-b.txt")
+    file_loc = os.path.join(os.path.dirname(__file__), "./input-c.txt")
 
     with open(file_loc) as f:
         lines = [line.strip() for line in f]
@@ -173,7 +218,7 @@ def part_one(input: List[str]) -> int:
         # print(node, node.compute_distance_from_root())
         max_distance = max(
             max_distance,
-            node.compute_distance_from_root(visited=[]),
+            node.compute_distance_from_root(),
         )
 
     return max_distance
