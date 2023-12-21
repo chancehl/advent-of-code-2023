@@ -2,29 +2,29 @@ import os
 import sys
 from typing import List, Dict, Tuple, Optional
 from typing_extensions import Self
+from numpy import Inf
 
 
 class PipeMaze:
     graph: Dict
-    _matrix: List[List[str]]
+    matrix: List[List[str]]
 
     def __init__(self: Self, matrix: List[List[str]]) -> None:
         graph = {}
 
+        self.matrix = matrix
+
         for row in range(0, len(matrix)):
             for col in range(0, len(matrix[0])):
-                graph[(row, col)] = PipeMaze.get_adjacent_nodes(matrix, (row, col))
+                if matrix[row][col] != ".":
+                    graph[(row, col)] = self.get_adjacent_nodes((row, col))
 
         self.graph = graph
-        self._matrix = matrix
 
-    @staticmethod
-    def get_adjacent_nodes(
-        matrix: List[List[str]], position: (int, int)
-    ) -> (Tuple, Tuple):
+    def get_adjacent_nodes(self: Self, position: (int, int)) -> (Tuple, Tuple):
         (row, col) = position
 
-        symbol = matrix[row][col]
+        symbol = self.matrix[row][col]
 
         nodes = []
 
@@ -33,13 +33,13 @@ class PipeMaze:
             if row >= 1:
                 nodes.append((row - 1, col))
 
-            if row < len(matrix):
+            if row < len(self.matrix):
                 nodes.append((row + 1, col))
 
             return nodes
         # E + W
         elif symbol == "-":
-            if col < len(matrix[0]):
+            if col < len(self.matrix[0]):
                 nodes.append((row, col + 1))
 
             if col >= 1:
@@ -51,7 +51,7 @@ class PipeMaze:
             if row >= 1:
                 nodes.append((row - 1, col))
 
-            if col < len(matrix[0]):
+            if col < len(self.matrix[0]):
                 nodes.append((row, col + 1))
 
             return nodes
@@ -66,7 +66,7 @@ class PipeMaze:
             return nodes
         # S + W
         elif symbol == "7":
-            if row < len(matrix):
+            if row < len(self.matrix):
                 nodes.append((row + 1, col))
 
             if col >= 1:
@@ -75,10 +75,10 @@ class PipeMaze:
             return nodes
         # S + E
         elif symbol == "F":
-            if row < len(matrix):
+            if row < len(self.matrix):
                 nodes.append((row + 1, col))
 
-            if col < len(matrix[0]):
+            if col < len(self.matrix[0]):
                 nodes.append((row, col + 1))
 
             return nodes
@@ -91,37 +91,55 @@ class PipeMaze:
 
     def find_start_node(self: Self) -> Optional[Tuple]:
         for key in self.graph.keys():
-            if self._matrix[key[0]][key[1]] == "S":
+            if self.matrix[key[0]][key[1]] == "S":
                 return key
 
         return None
 
-    def find_shortest_path(
-        self: Self, start: (int, int), end: (int, int), path: List[Tuple] = []
-    ) -> List[Tuple]:
-        path = path + [start]
+    def dijkstras(self: Self, start: (int, int)) -> Dict:
+        # mark everything as unvisited
+        unvisited_nodes = list(self.graph.keys())
 
-        if start == end:
-            return path
+        shortest_path = {}
+        previous_nodes = {}
 
-        if start not in self.graph:
-            return None
+        max_value = Inf
 
-        shortest = None
+        # set everything as "infinity" originally
+        for node in unvisited_nodes:
+            shortest_path[node] = max_value
 
-        for node in self.graph[start]:
-            if node not in path:
-                newpath = self.find_shortest_path(node, end, path)
+        # starting node distance gets set to 0
+        shortest_path[start] = 0
 
-                if newpath:
-                    if not shortest or len(newpath) < len(shortest):
-                        shortest = newpath
+        while unvisited_nodes:
+            current_min_node = None
 
-        return shortest
+            for node in unvisited_nodes:
+                if current_min_node == None:
+                    current_min_node = node
+                elif shortest_path[node] < shortest_path[current_min_node]:
+                    current_min_node = node
+
+            neighbors = self.get_adjacent_nodes(current_min_node)
+
+            for neighbor in neighbors:
+                tentative_value = shortest_path[current_min_node] + 1
+
+                if (
+                    neighbor in shortest_path
+                    and tentative_value < shortest_path[neighbor]
+                ):
+                    shortest_path[neighbor] = tentative_value
+                    previous_nodes[neighbor] = current_min_node
+
+            unvisited_nodes.remove(current_min_node)
+
+        return shortest_path
 
 
 def read_input() -> List[str]:
-    file_loc = os.path.join(os.path.dirname(__file__), "./input.txt")
+    file_loc = os.path.join(os.path.dirname(__file__), "./input-b.txt")
 
     with open(file_loc) as f:
         lines = [line.strip() for line in f]
@@ -134,13 +152,13 @@ def part_one(input: List[str]) -> int:
 
     maze = PipeMaze([list(line) for line in input])
 
-    start = maze.find_start_node()
+    start_node = maze.find_start_node()
 
     for node in maze.graph:
-        path = maze.find_shortest_path(start=node, end=start, path=[])
+        shortest_paths = maze.dijkstras(node)
+        distance = shortest_paths[start_node]
 
-        if path != None:
-            max_distance = max(max_distance, len(path) - 1)
+        max_distance = max(max_distance, distance)
 
     return max_distance
 
