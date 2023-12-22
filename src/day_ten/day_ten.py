@@ -137,9 +137,65 @@ class PipeMaze:
 
         return shortest_path
 
+    def get_connecting_nodes(self: Self, node: (int, int)) -> Tuple:
+        (row, col) = node
+
+        symbol = self.matrix[row][col]
+
+        # if it's the starting symbol, we're just going to look for any two connecting nodes
+        if symbol == "S":
+            nodes = []
+
+            # up
+            if row > 0 and self.matrix[row - 1][col] != ".":
+                nodes.append((row - 1, col))
+
+            # down
+            if row < len(self.matrix) and self.matrix[row + 1][col] != ".":
+                nodes.append((row + 1, col))
+
+            # left
+            if col > 0 and self.matrix[row][col - 1] != ".":
+                nodes.append((row, col - 1))
+
+            # right
+            if col < len(self.matrix[0]) and self.matrix[row][col + 1] != ".":
+                nodes.append((row, col + 1))
+
+            return nodes
+        else:
+            connections = {
+                "-": [(0, -1), (0, 1)],
+                "|": [(-1, 0), (1, 0)],
+                "L": [(-1, 0), (0, 1)],
+                "J": [(-1, 0), (0, -1)],
+                "7": [(1, 0), (0, -1)],
+                "F": [(1, 0), (0, 1)],
+                ".": [],
+            }
+
+            moves = connections[symbol]
+
+            nodes = []
+
+            for move in moves:
+                nodes.append((row + move[0], col + move[1]))
+
+            return nodes
+
+
+def find_first_unvisited_connection(
+    connections: List[Tuple], visited: List[Tuple]
+) -> Tuple:
+    for connection in connections:
+        if connection not in visited:
+            return connection
+
+    return None
+
 
 def read_input() -> List[str]:
-    file_loc = os.path.join(os.path.dirname(__file__), "./input-b.txt")
+    file_loc = os.path.join(os.path.dirname(__file__), "./input.txt")
 
     with open(file_loc) as f:
         lines = [line.strip() for line in f]
@@ -148,19 +204,36 @@ def read_input() -> List[str]:
 
 
 def part_one(input: List[str]) -> int:
-    max_distance = -1
-
     maze = PipeMaze([list(line) for line in input])
 
     start_node = maze.find_start_node()
 
-    for node in maze.graph:
-        shortest_paths = maze.dijkstras(node)
-        distance = shortest_paths[start_node]
+    connecting_nodes = maze.get_connecting_nodes(start_node)
 
-        max_distance = max(max_distance, distance)
+    left_node = connecting_nodes[0]
+    right_node = connecting_nodes[1]
 
-    return max_distance
+    left_visited = [start_node]
+    right_visited = [start_node]
+
+    distance = 1
+
+    while left_node != right_node:
+        left_visited.append(left_node)
+        right_visited.append(right_node)
+
+        left_connections = maze.get_connecting_nodes(left_node)
+        right_connections = maze.get_connecting_nodes(right_node)
+
+        next_left = find_first_unvisited_connection(left_connections, left_visited)
+        next_right = find_first_unvisited_connection(right_connections, right_visited)
+
+        left_node = next_left
+        right_node = next_right
+
+        distance += 1
+
+    return distance
 
 
 def part_two(input: List[str]) -> int:
